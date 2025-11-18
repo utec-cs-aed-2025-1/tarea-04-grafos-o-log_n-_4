@@ -3,9 +3,9 @@
 # Tarea de Grafos
 
 ## Integrantes: 
-- 1 ____   _____
-- 2 ____   _____
-- 3 ____   _____
+- 1 Guerrero Gutierrez, Nayeli Belén
+- 2 Maquera Quispe, Luis Fernando
+- 3 Miranda Zamora, Diego André
 
 ## Objetivo: 
 El objetivo de esta tarea es implementar un **Path Finder** para la ciudad de Lima. 
