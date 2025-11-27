@@ -57,7 +57,7 @@ class PathFindingManager {
         bool operator < (const Heu_Entry& other) const {
             return dist_heu < other.dist_heu;
         }
-    }
+    };
     
     void dijkstra(Graph &graph) {
         std::unordered_map<Node *, Node *> parent;
@@ -159,7 +159,7 @@ class PathFindingManager {
         return sqrt(delta_x * delta_x + delta_y * delta_y);
     }
 
-    void BestFS(Graph &graph){
+    void best_first_search(Graph &graph){
         std::unordered_map<Node *, Node *> parent; // Para formar el camino de regreso
         std::unordered_map<Node *, bool> visited; // Marca los nodos ya visitados
         std::set<Heu_Entry> queue; // Para obtener la heurística más conveniente (menor costo)
@@ -329,6 +329,9 @@ public:
                 break;
             case AStar:
                 a_star(graph);
+                break;
+            case BestFS:
+                best_first_search(graph);
                 break;
             case None:
             default:
