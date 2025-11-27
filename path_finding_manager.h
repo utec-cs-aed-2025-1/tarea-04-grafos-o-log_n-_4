@@ -10,12 +10,14 @@
 #include <limits>
 #include "graph.h"
 
+using namespace std; 
 
 // Este enum sirve para identificar el algoritmo que el usuario desea simular
 enum Algorithm {
     None,
     Dijkstra,
-    AStar
+    AStar,
+    BestFS
 };
 
 
@@ -46,6 +48,17 @@ class PathFindingManager {
         }
     };
 
+    
+    struct Heu_Entry{
+        Node* node;
+        double dist_heu;
+        Edge* arista; 
+
+        bool operator < (const Heu_Entry& other) const {
+            return dist_heu < other.dist_heu;
+        }
+    }
+    
     void dijkstra(Graph &graph) {
         std::unordered_map<Node *, Node *> parent;
         std::unordered_map<Node *, double> dist;
@@ -86,9 +99,11 @@ class PathFindingManager {
                 // Determinar el nodo vecino dependiendo de la dirección de la arista
                 if (edge->src == current_node) {
                     neighbor = edge->dest;
-                } else if (!edge->one_way && edge->dest == current_node) {
+                } 
+                else if (!edge->one_way && edge->dest == current_node) {
                     neighbor = edge->src;
-                } else {
+                } 
+                else {
                     continue; // Esta arista no es válida desde current_node
                 }
                 
@@ -129,6 +144,96 @@ class PathFindingManager {
         std::unordered_map<Node *, Node *> parent;
         // TODO: Add your code here
 
+        set_final_path(parent);
+    }
+
+    double calcula_heu(Node* dest, Node* init){
+        if (init == nullptr || dest == nullptr){
+            throw("Error, inicio o destino son punteros nulos"); 
+        }
+        
+        // Calcular la diferencia en coordenadas x e y
+        double delta_x = dest->coord.x - init->coord.x;
+        double delta_y = dest->coord.y - init->coord.y;
+
+        return sqrt(delta_x * delta_x + delta_y * delta_y);
+    }
+
+    void BestFS(Graph &graph){
+        std::unordered_map<Node *, Node *> parent; // Para formar el camino de regreso
+        std::unordered_map<Node *, bool> visited; // Marca los nodos ya visitados
+        std::set<Heu_Entry> queue; // Para obtener la heurística más conveniente (menor costo)
+        
+        // Inicializar el nodo origen
+        queue.insert({src, 0.0, nullptr});
+        parent[src] = nullptr;
+        visited[src] = false;
+
+        while (!queue.empty()) {
+            // Extraer el nodo con menor distancia heurística
+            Heu_Entry current = *queue.begin();
+            queue.erase(queue.begin());
+            
+            Node* current_node = current.node;
+            
+            // Si el nodo ya fue visitado, continuar
+            if (visited[current_node]) {
+                continue;
+            }
+            
+            // Marcar el nodo como visitado
+            visited[current_node] = true;
+            
+            // Si la arista no es nula, graficar la arista (no se grafica para el nodo origen)
+            if (current.arista != nullptr) {
+                // Graficar la arista basándose en el nodo actual y su nodo padre
+                Node* prev_node = parent[current_node];
+                if (prev_node != nullptr) {
+                    visited_edges.push_back(
+                        sfLine(prev_node->coord, current_node->coord, 
+                               sf::Color(255, 255, 0, 100), 0.5f)
+                    );
+                }
+            }
+            
+            // Si llegamos al destino, terminamos
+            if (current_node == dest) {
+                break;
+            }
+            
+            // Renderizar ocasionalmente (cada 100 iteraciones) para mejor rendimiento
+            render_counter++;
+            if (render_counter % 100 == 0) {
+                render();
+            }
+            
+            // Explorar todas las aristas del nodo actual
+            for (Edge* edge : current_node->edges) {
+                Node* neighbor = nullptr;
+                
+                // Determinar el nodo vecino dependiendo de la dirección de la arista
+                if (edge->src == current_node) {
+                    neighbor = edge->dest;
+                } else if (!edge->one_way && edge->dest == current_node) {
+                    neighbor = edge->src;
+                } else {
+                    continue; // Esta arista no es válida desde current_node
+                }
+                
+                // Si el nodo vecino no ha sido visitado
+                if (!visited[neighbor]) {
+                    // Calcular la distancia heurística del vecino hacia el destino
+                    double heuristic_dist = calcula_heu(dest, neighbor);
+                    
+                    // Actualizar el padre del vecino
+                    parent[neighbor] = current_node;
+                    
+                    // Agregar el vecino a la cola con su distancia heurística y la arista
+                    queue.insert({neighbor, heuristic_dist, edge});
+                }
+            }
+        }
+        
         set_final_path(parent);
     }
 
