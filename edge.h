@@ -93,6 +93,10 @@ struct Edge {
         edges.reserve(790'509);
 
         std::ifstream file(edges_path);
+        if (!file.is_open()) {
+            throw std::runtime_error("Could not open file: " + edges_path);
+        }
+        
         char *header = new char[50];
         header[49] = '\0';
         file.getline(header, 50, '\n');
@@ -121,7 +125,13 @@ struct Edge {
             file.getline(oneway, 6, ',');
             file.getline(lanes, 3, '\n');
 
-            if (file.eof()) {
+            if (file.eof() || strlen(src) == 0) {
+                delete[] src;
+                delete[] dest;
+                delete[] max_speed;
+                delete[] length;
+                delete[] oneway;
+                delete[] lanes;
                 break;
             }
 
@@ -146,6 +156,7 @@ struct Edge {
             delete[] oneway;
             delete[] length;
             delete[] lanes;
+            delete[] max_speed;
         }
     }
 

@@ -1,9 +1,11 @@
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/5zgGDtf4)
+[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-2e0aaae1b6195c2367325f4f02e2d04e9abb55f0b24a779b69b11b9e10269abc.svg)](https://classroom.github.com/online_ide?assignment_repo_id=21726639&assignment_repo_type=AssignmentRepo)
 # Tarea de Grafos
 
 ## Integrantes: 
-- 1 ____   _____
-- 2 ____   _____
-- 3 ____   _____
+- 1 Guerrero Gutierrez, Nayeli Belén
+- 2 Maquera Quispe, Luis Fernando
+- 3 Miranda Zamora, Diego André
 
 ## Objetivo: 
 El objetivo de esta tarea es implementar un **Path Finder** para la ciudad de Lima. 
@@ -57,6 +59,77 @@ Además:
 - Analice la complejidad computacional de los tres algoritmos de acuerdo a su propia implementación.
 - Puede considere como heuristica la distancia en linea recta.
 - **Debe realizar un pequeño video (2 min) mostrando la funcionalidad visual de cada algoritmo**
+
+## Video Demostrativo
+
+🎥 [Ver video de demostración](https://youtu.be/JXYGCxIW918)
+
+## Análisis de Complejidad Computacional
+
+### **Dijkstra**
+
+**Complejidad Temporal:** O((V + E) log V)
+- V iteraciones del bucle principal (cada nodo se procesa una vez)
+- E aristas exploradas en total
+- Cada operación de inserción/extracción del priority queue: O(log V)
+
+**Complejidad Espacial:** O(V)
+- Mapa de distancias: O(V)
+- Mapa de padres: O(V)
+- Priority queue: O(V) en el peor caso
+
+**Implementación:**
+- Utiliza `std::priority_queue` (min-heap)
+- Garantiza encontrar el camino más corto
+- No utiliza heurística, explora de manera uniforme
+
+### **A* (A-Star)**
+
+**Complejidad Temporal:** O((V + E) log V) en el peor caso
+- Similar a Dijkstra pero con heurística que guía la búsqueda
+- En la práctica es más eficiente por explorar menos nodos
+- Depende de la calidad de la heurística (distancia euclidiana)
+
+**Complejidad Espacial:** O(V)
+- Mapas de g_score y f_score: O(V)
+- Mapa de padres: O(V)
+- Priority queue: O(V)
+
+**Implementación:**
+- Utiliza `std::priority_queue` (min-heap)
+- Función de costo: f(n) = g(n) + h(n)
+  - g(n): costo real desde el origen
+  - h(n): heurística (distancia euclidiana al destino)
+- Garantiza el camino óptimo si la heurística es admisible
+- Más eficiente que Dijkstra al dirigir la búsqueda hacia el objetivo
+
+### **Best First Search**
+
+**Complejidad Temporal:** O((V + E) log V) en el peor caso
+- Puede explorar todo el grafo si la heurística no es efectiva
+- En la práctica suele ser más rápido por ser "greedy"
+- No garantiza encontrar el camino óptimo
+
+**Complejidad Espacial:** O(V)
+- Mapa de visitados: O(V)
+- Mapa de padres: O(V)
+- Set ordenado: O(V)
+
+**Implementación:**
+- Utiliza `std::set` ordenado por distancia heurística
+- Solo considera la heurística (distancia al destino), ignora el costo acumulado
+- Algoritmo "codicioso" (greedy): siempre elige el nodo que parece más cercano al objetivo
+- Más rápido pero no garantiza el camino más corto
+
+### **Comparación de Rendimiento**
+
+| Algoritmo | Nodos Explorados | Garantía de Optimalidad | Velocidad |
+|-----------|------------------|-------------------------|-----------|
+| Dijkstra | Alto | ✅ Sí | Lento |
+| A* | Medio | ✅ Sí (con heurística admisible) | Medio-Rápido |
+| Best First Search | Variable | ❌ No | Rápido |
+
+**Nota:** Los tiempos y nodos explorados reales se muestran en la terminal al ejecutar cada algoritmo.
 
 ## Diagrama de clases UML 
 
