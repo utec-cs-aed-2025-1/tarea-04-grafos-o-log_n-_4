@@ -95,9 +95,10 @@ class PathFindingManager {
                 auto end_time = std::chrono::high_resolution_clock::now();
                 auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
                 
-                std::cout << "\n-----DIJKSTRA -----" << std::endl;
+                std::cout << "\n----- DIJKSTRA -----" << std::endl;
                 std::cout << "Nodos explorados: " << nodes_explored << std::endl;
-                std::cout << "Tiempo de ejecución: " << duration.count() << " ms (" << duration.count() / 1000.0 << " ms)" << std::endl;
+                std::cout << "Tiempo de ejecucion: " << duration.count() << " us ("
+                          << duration.count() / 1000.0 << " ms)" << std::endl;
                 break;
             }
             
@@ -194,7 +195,7 @@ class PathFindingManager {
                 
                 std::cout << "\n----- A* -----" << std::endl;
                 std::cout << "Nodos explorados: " << nodes_explored << std::endl;
-                std::cout << "Tiempo de ejecución: " << duration.count() << " ms (" 
+                std::cout << "Tiempo de ejecucion: " << duration.count() << " ms ("
                           << duration.count() / 1000.0 << " ms)" << std::endl;
                 break;
             }
@@ -263,6 +264,9 @@ class PathFindingManager {
     }
 
     void best_first_search(Graph &graph){
+        // Iniciamos un temporizador para medir tiempo de ejecución del Best First Search
+        auto start_time = std::chrono::high_resolution_clock::now();
+        
         std::unordered_map<Node *, Node *> parent; // Para formar el camino de regreso
         std::unordered_map<Node *, bool> visited; // Marca los nodos ya visitados
         std::set<Heu_Entry> queue; // Para obtener la heurística más conveniente (menor costo)
@@ -301,8 +305,17 @@ class PathFindingManager {
             
             // Si llegamos al destino, terminamos
             if (current_node == dest) {
+                auto end_time = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+                
+                std::cout << "\n----- BEST FIRST SEARCH -----" << std::endl;
+                std::cout << "Nodos explorados: " << nodes_explored << std::endl;
+                std::cout << "Tiempo de ejecucion: " << duration.count() << " us ("
+                          << duration.count() / 1000.0 << " ms)" << std::endl;
                 break;
             }
+            
+            nodes_explored++;
             
             // Renderizar ocasionalmente (cada 100 iteraciones) para mejor rendimiento
             render_counter++;
