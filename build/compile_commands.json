@@ -1,8 +1,0 @@
-[
-{
-  "directory": "C:/Users/diego/github-classroom/utec-cs-aed-2025-1/tarea-04-grafos-o-log_n-_4/build",
-  "command": "C:\\msys64\\mingw64\\bin\\g++.exe  @CMakeFiles/homework_graph.dir/includes_CXX.rsp -g -o CMakeFiles\\homework_graph.dir\\main.cpp.obj -c C:\\Users\\diego\\github-classroom\\utec-cs-aed-2025-1\\tarea-04-grafos-o-log_n-_4\\main.cpp",
-  "file": "C:/Users/diego/github-classroom/utec-cs-aed-2025-1/tarea-04-grafos-o-log_n-_4/main.cpp",
-  "output": "CMakeFiles/homework_graph.dir/main.cpp.obj"
-}
-]
