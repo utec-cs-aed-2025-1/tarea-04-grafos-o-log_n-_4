@@ -64,6 +64,73 @@ Además:
 
 🎥 [Ver video de demostración](https://youtu.be/JXYGCxIW918)
 
+## Análisis de Complejidad Computacional
+
+### **Dijkstra**
+
+**Complejidad Temporal:** O((V + E) log V)
+- V iteraciones del bucle principal (cada nodo se procesa una vez)
+- E aristas exploradas en total
+- Cada operación de inserción/extracción del priority queue: O(log V)
+
+**Complejidad Espacial:** O(V)
+- Mapa de distancias: O(V)
+- Mapa de padres: O(V)
+- Priority queue: O(V) en el peor caso
+
+**Implementación:**
+- Utiliza `std::priority_queue` (min-heap)
+- Garantiza encontrar el camino más corto
+- No utiliza heurística, explora de manera uniforme
+
+### **A* (A-Star)**
+
+**Complejidad Temporal:** O((V + E) log V) en el peor caso
+- Similar a Dijkstra pero con heurística que guía la búsqueda
+- En la práctica es más eficiente por explorar menos nodos
+- Depende de la calidad de la heurística (distancia euclidiana)
+
+**Complejidad Espacial:** O(V)
+- Mapas de g_score y f_score: O(V)
+- Mapa de padres: O(V)
+- Priority queue: O(V)
+
+**Implementación:**
+- Utiliza `std::priority_queue` (min-heap)
+- Función de costo: f(n) = g(n) + h(n)
+  - g(n): costo real desde el origen
+  - h(n): heurística (distancia euclidiana al destino)
+- Garantiza el camino óptimo si la heurística es admisible
+- Más eficiente que Dijkstra al dirigir la búsqueda hacia el objetivo
+
+### **Best First Search**
+
+**Complejidad Temporal:** O((V + E) log V) en el peor caso
+- Puede explorar todo el grafo si la heurística no es efectiva
+- En la práctica suele ser más rápido por ser "greedy"
+- No garantiza encontrar el camino óptimo
+
+**Complejidad Espacial:** O(V)
+- Mapa de visitados: O(V)
+- Mapa de padres: O(V)
+- Set ordenado: O(V)
+
+**Implementación:**
+- Utiliza `std::set` ordenado por distancia heurística
+- Solo considera la heurística (distancia al destino), ignora el costo acumulado
+- Algoritmo "codicioso" (greedy): siempre elige el nodo que parece más cercano al objetivo
+- Más rápido pero no garantiza el camino más corto
+
+### **Comparación de Rendimiento**
+
+| Algoritmo | Nodos Explorados | Garantía de Optimalidad | Velocidad |
+|-----------|------------------|-------------------------|-----------|
+| Dijkstra | Alto | ✅ Sí | Lento |
+| A* | Medio | ✅ Sí (con heurística admisible) | Medio-Rápido |
+| Best First Search | Variable | ❌ No | Rápido |
+
+**Nota:** Los tiempos y nodos explorados reales se muestran en la terminal al ejecutar cada algoritmo.
+
 ## Diagrama de clases UML 
 
 ![image](https://github.com/utec-cs-aed/homework_graph/assets/79115974/f5a3d89e-cb48-4715-b172-a17e6e27ee24)
