@@ -7,7 +7,10 @@
 
 #include <unordered_map>
 #include <set>
+#include <queue>
 #include <limits>
+#include <iostream>
+#include <chrono>
 #include "graph.h"
 
 
@@ -36,54 +39,67 @@ class PathFindingManager {
     std::vector<sfLine> path;
     std::vector<sfLine> visited_edges;
     int render_counter = 0;  // Contador para renderizado ocasional
+    int nodes_explored = 0;  // Contador de nodos explorados
 
     struct Entry {
         Node* node;
         double dist;
 
+        // Para priority_queue: el operador debe ser > para crear un MinHeap
         bool operator < (const Entry& other) const {
-            return dist < other.dist;
+            return dist > other.dist;
         }
     };
 
     void dijkstra(Graph &graph) {
+        // Iniciamos un temporizador para medir tiempo de ejecución del Dijkstra
+        auto start_time = std::chrono::high_resolution_clock::now();
+        
         std::unordered_map<Node *, Node *> parent;
         std::unordered_map<Node *, double> dist;
-        std::set<Entry> pq;
+        std::priority_queue<Entry> pq;  // MinHeap
         
-        // Inicializar todas las distancias como infinito
+        // distancias como infinito
         for (auto &[id, node] : graph.nodes) {
             dist[node] = std::numeric_limits<double>::max();
         }
         
-        // La distancia al nodo origen es 0
+        // distancia al nodo origen 0
         dist[src] = 0.0;
-        pq.insert({src, 0.0});
+        pq.push({src, 0.0});
         parent[src] = nullptr;
         
         while (!pq.empty()) {
-            // Extraer el nodo con menor distancia
-            Entry current = *pq.begin();
-            pq.erase(pq.begin());
+            // extraer el nodo con menor distancia
+            Entry current = pq.top();
+            pq.pop();
             
             Node* current_node = current.node;
             double current_dist = current.dist;
             
-            // Si llegamos al destino, terminamos
+            // si llegamos al destino, terminamos
             if (current_node == dest) {
+                auto end_time = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+                
+                std::cout << "\n-----DIJKSTRA -----" << std::endl;
+                std::cout << "Nodos explorados: " << nodes_explored << std::endl;
+                std::cout << "Tiempo de ejecución: " << duration.count() << " ms (" << duration.count() / 1000.0 << " ms)" << std::endl;
                 break;
             }
             
-            // Si la distancia actual es mayor que la registrada, continuar
+            nodes_explored++;
+            
+            // si la distancia actual es mayor que la registrada, continuar
             if (current_dist > dist[current_node]) {
                 continue;
             }
             
-            // Explorar todas las aristas del nodo actual
+            // explorar todas las aristas del nodo actual
             for (Edge* edge : current_node->edges) {
                 Node* neighbor = nullptr;
                 
-                // Determinar el nodo vecino dependiendo de la dirección de la arista
+                // determinar el nodo vecino dependiendo de la dirección de la arista
                 if (edge->src == current_node) {
                     neighbor = edge->dest;
                 } else if (!edge->one_way && edge->dest == current_node) {
@@ -92,20 +108,17 @@ class PathFindingManager {
                     continue; // Esta arista no es válida desde current_node
                 }
                 
-                // Calcular la nueva distancia (usando length como peso)
+                // calcular la nueva distancia (usando length como peso)
                 double new_dist = current_dist + edge->length;
                 
-                // Si encontramos un camino más corto
+                // si encontramos un camino más corto
                 if (new_dist < dist[neighbor]) {
-                    // Remover la entrada anterior si existe
-                    pq.erase({neighbor, dist[neighbor]});
-                    
-                    // Actualizar distancia y padre
+                    // Actualizamos distancia y padre
                     dist[neighbor] = new_dist;
                     parent[neighbor] = current_node;
                     
-                    // Insertar con la nueva distancia
-                    pq.insert({neighbor, new_dist});
+                    // insertar con la nueva distancia (no necesitamos remover en priority_queue)
+                    pq.push({neighbor, new_dist});
                     
                     // Agregar la arista visitada para visualización
                     visited_edges.push_back(
@@ -113,7 +126,7 @@ class PathFindingManager {
                                sf::Color(255, 255, 0, 100), 0.5f)
                     );
                     
-                    // Renderizar ocasionalmente (cada 100 iteraciones) para mejor rendimiento
+                    // renderizar ocasionalmente (cada 100 iteraciones) para mejor rendimiento
                     render_counter++;
                     if (render_counter % 100 == 0) {
                         render();
@@ -125,9 +138,99 @@ class PathFindingManager {
         set_final_path(parent);
     }
 
+    double heuristic(Node* from, Node* to) {
+        double dx = from->coord.x - to->coord.x;
+        double dy = from->coord.y - to->coord.y;
+        return std::sqrt(dx * dx + dy * dy);
+    }
+
     void a_star(Graph &graph) {
+        // iniciamos un temporizador para calcular el tiempo de ejecución del A*
+        auto start_time = std::chrono::high_resolution_clock::now();
+        
         std::unordered_map<Node *, Node *> parent;
-        // TODO: Add your code here
+        std::unordered_map<Node *, double> g_score;  // costo real desde el origin
+        std::unordered_map<Node *, double> f_score;  // g + heurística
+        std::priority_queue<Entry> pq;  // MinHeap
+        
+        // distancias como infinito
+        for (auto &[id, node] : graph.nodes) {
+            g_score[node] = std::numeric_limits<double>::max();
+            f_score[node] = std::numeric_limits<double>::max();
+        }
+        
+        // distancia al nodo origen será 0
+        g_score[src] = 0.0;
+        f_score[src] = heuristic(src, dest);
+        pq.push({src, f_score[src]});
+        parent[src] = nullptr;
+        
+        while (!pq.empty()) {
+            // extraemos el nodo con menor f_score
+            Entry current = pq.top();
+            pq.pop();
+            
+            Node* current_node = current.node;
+            
+            // si llegamos al destino, terminamos
+            if (current_node == dest) {
+                auto end_time = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+                
+                std::cout << "\n----- A* -----" << std::endl;
+                std::cout << "Nodos explorados: " << nodes_explored << std::endl;
+                std::cout << "Tiempo de ejecución: " << duration.count() << " ms (" 
+                          << duration.count() / 1000.0 << " ms)" << std::endl;
+                break;
+            }
+            
+            nodes_explored++;
+            
+            // si el f_score actual es mayor que el registrado, continuar
+            if (current.dist > f_score[current_node]) {
+                continue;
+            }
+            
+            // explorar todas las aristas del nodo actual
+            for (Edge* edge : current_node->edges) {
+                Node* neighbor = nullptr;
+                
+                // determinames el nodo vecino dependiendo de la dirección de la arista
+                if (edge->src == current_node) {
+                    neighbor = edge->dest;
+                } else if (!edge->one_way && edge->dest == current_node) {
+                    neighbor = edge->src;
+                } else {
+                    continue; // Esta arista no es válida desde current_node
+                }
+                
+                // calculamos el nuevo g_score (costo real)
+                double tentative_g_score = g_score[current_node] + edge->length;
+                
+                // si se encontramos un camino mejor
+                if (tentative_g_score < g_score[neighbor]) {
+                    // sctualizar g_score, f_score y padre
+                    g_score[neighbor] = tentative_g_score;
+                    f_score[neighbor] = tentative_g_score + heuristic(neighbor, dest);
+                    parent[neighbor] = current_node;
+                    
+                    // insertar con el nuevo f_score (no necesitamos remover en priority_queue)
+                    pq.push({neighbor, f_score[neighbor]});
+                    
+                    // agregar la arista visitada para visualización
+                    visited_edges.push_back(
+                        sfLine(current_node->coord, neighbor->coord, 
+                               sf::Color(0, 255, 255, 100), 0.5f)  // Cyan para A*
+                    );
+                    
+                    // renderizamos ocasionalmente (cada 100 iteraciones) para mejor rendimiento
+                    render_counter++;
+                    if (render_counter % 100 == 0) {
+                        render();
+                    }
+                }
+            }
+        }
 
         set_final_path(parent);
     }
@@ -216,6 +319,7 @@ public:
         visited_edges.clear();
         path.clear();
         render_counter = 0;  // Reset del contador
+        nodes_explored = 0;  // Reset del contador de nodos
         
         // Ejecutar el algoritmo seleccionado
         switch (algorithm) {
