@@ -5,11 +5,10 @@
 #ifndef HOMEWORK_GRAPH_PATH_FINDING_MANAGER_H
 #define HOMEWORK_GRAPH_PATH_FINDING_MANAGER_H
 
-
-#include "window_manager.h"
-#include "graph.h"
 #include <unordered_map>
 #include <set>
+#include <limits>
+#include "graph.h"
 
 
 // Este enum sirve para identificar el algoritmo que el usuario desea simular
@@ -36,6 +35,7 @@ class PathFindingManager {
     WindowManager *window_manager;
     std::vector<sfLine> path;
     std::vector<sfLine> visited_edges;
+    int render_counter = 0;  // Contador para renderizado ocasional
 
     struct Entry {
         Node* node;
@@ -48,7 +48,79 @@ class PathFindingManager {
 
     void dijkstra(Graph &graph) {
         std::unordered_map<Node *, Node *> parent;
-        // TODO: Add your code here
+        std::unordered_map<Node *, double> dist;
+        std::set<Entry> pq;
+        
+        // Inicializar todas las distancias como infinito
+        for (auto &[id, node] : graph.nodes) {
+            dist[node] = std::numeric_limits<double>::max();
+        }
+        
+        // La distancia al nodo origen es 0
+        dist[src] = 0.0;
+        pq.insert({src, 0.0});
+        parent[src] = nullptr;
+        
+        while (!pq.empty()) {
+            // Extraer el nodo con menor distancia
+            Entry current = *pq.begin();
+            pq.erase(pq.begin());
+            
+            Node* current_node = current.node;
+            double current_dist = current.dist;
+            
+            // Si llegamos al destino, terminamos
+            if (current_node == dest) {
+                break;
+            }
+            
+            // Si la distancia actual es mayor que la registrada, continuar
+            if (current_dist > dist[current_node]) {
+                continue;
+            }
+            
+            // Explorar todas las aristas del nodo actual
+            for (Edge* edge : current_node->edges) {
+                Node* neighbor = nullptr;
+                
+                // Determinar el nodo vecino dependiendo de la dirección de la arista
+                if (edge->src == current_node) {
+                    neighbor = edge->dest;
+                } else if (!edge->one_way && edge->dest == current_node) {
+                    neighbor = edge->src;
+                } else {
+                    continue; // Esta arista no es válida desde current_node
+                }
+                
+                // Calcular la nueva distancia (usando length como peso)
+                double new_dist = current_dist + edge->length;
+                
+                // Si encontramos un camino más corto
+                if (new_dist < dist[neighbor]) {
+                    // Remover la entrada anterior si existe
+                    pq.erase({neighbor, dist[neighbor]});
+                    
+                    // Actualizar distancia y padre
+                    dist[neighbor] = new_dist;
+                    parent[neighbor] = current_node;
+                    
+                    // Insertar con la nueva distancia
+                    pq.insert({neighbor, new_dist});
+                    
+                    // Agregar la arista visitada para visualización
+                    visited_edges.push_back(
+                        sfLine(current_node->coord, neighbor->coord, 
+                               sf::Color(255, 255, 0, 100), 0.5f)
+                    );
+                    
+                    // Renderizar ocasionalmente (cada 100 iteraciones) para mejor rendimiento
+                    render_counter++;
+                    if (render_counter % 100 == 0) {
+                        render();
+                    }
+                }
+            }
+        }
 
         set_final_path(parent);
     }
@@ -63,8 +135,28 @@ class PathFindingManager {
     //* --- render ---
     // En cada iteración de los algoritmos esta función es llamada para dibujar los cambios en el 'window_manager'
     void render() {
-        sf::sleep(sf::milliseconds(10));
-        // TODO: Add your code here
+        sf::sleep(sf::milliseconds(1));  // Reducido de 10ms a 1ms
+        
+        // Limpiar la ventana
+        window_manager->clear();
+        
+        // Dibujar todas las aristas visitadas
+        for (sfLine &line : visited_edges) {
+            line.draw(window_manager->get_window(), sf::RenderStates::Default);
+        }
+        
+        // Dibujar el nodo origen
+        if (src != nullptr) {
+            src->draw(window_manager->get_window());
+        }
+        
+        // Dibujar el nodo destino
+        if (dest != nullptr) {
+            dest->draw(window_manager->get_window());
+        }
+        
+        // Mostrar el frame actual
+        window_manager->display();
     }
 
     //* --- set_final_path ---
@@ -84,8 +176,29 @@ class PathFindingManager {
     //*
     void set_final_path(std::unordered_map<Node *, Node *> &parent) {
         Node* current = dest;
-
-        // TODO: Add your code here
+        
+        // Verificar que existe un camino
+        if (parent.find(dest) == parent.end()) {
+            return; // No hay camino al destino
+        }
+        
+        // Reconstruir el camino desde dest hasta src
+        std::vector<sfLine> temp_path;
+        while (current != nullptr && parent[current] != nullptr) {
+            Node* prev = parent[current];
+            // Crear línea del camino con color verde brillante y mayor grosor
+            temp_path.push_back(
+                sfLine(prev->coord, current->coord, 
+                       sf::Color(0, 255, 0), 2.5f)
+            );
+            current = prev;
+        }
+        
+        // Invertir el camino para que vaya de src a dest
+        path.clear();
+        for (auto it = temp_path.rbegin(); it != temp_path.rend(); ++it) {
+            path.push_back(*it);
+        }
     }
 
 public:
@@ -99,7 +212,23 @@ public:
             return;
         }
 
-        // TODO: Add your code here
+        // Resetear las aristas y caminos anteriores
+        visited_edges.clear();
+        path.clear();
+        render_counter = 0;  // Reset del contador
+        
+        // Ejecutar el algoritmo seleccionado
+        switch (algorithm) {
+            case Dijkstra:
+                dijkstra(graph);
+                break;
+            case AStar:
+                a_star(graph);
+                break;
+            case None:
+            default:
+                break;
+        }
     }
 
     void reset() {
